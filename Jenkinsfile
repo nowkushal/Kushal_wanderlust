@@ -29,6 +29,7 @@ pipeline {
         stage('OWASP Dependency Check') {
             steps {
                 sh '''
+                    mkdir -p dependency-check-report
                     dependency-check --project wanderlust \
                         --scan . \
                         --format ALL \
@@ -57,8 +58,8 @@ pipeline {
         stage('Deploy using Docker compose') {
             steps {
                 sh '''
-                    docker compose -f $DOCKER_COMPOSE_FILE down || true
-                    docker compose -f $DOCKER_COMPOSE_FILE up -d --build
+                    docker-compose -f $DOCKER_COMPOSE_FILE down || true
+                    docker-compose -f $DOCKER_COMPOSE_FILE up -d --build
                 '''
             }
         }
@@ -69,7 +70,7 @@ pipeline {
             sh 'docker system prune -f || true'
         }
         failure {
-            sh 'docker compose -f $DOCKER_COMPOSE_FILE down || true'
+            sh 'docker-compose -f $DOCKER_COMPOSE_FILE down || true'
         }
     }
 }
