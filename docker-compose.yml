@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: wanderlust-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - wanderlust-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: wanderlust-redis
+    restart: unless-stopped
+    networks:
+      - wanderlust-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wanderlust-backend
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      - PORT=8080
+      - MONGODB_URI=mongodb://mongodb:27017/wanderlust
+      - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=http://localhost:3002
+      - BACKEND_URL=http://localhost:8082
+      - NODE_ENV=Production
+      - JWT_SECRET=70dd8b38486eee723ce2505f6db06f1ee503fde5eb06fc04687191a0ed665f3f98776902d2c89f6b993b1c579a87fedaf584c693a106f7cbf16e8b4e67e9d6df
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - wanderlust-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wanderlust-frontend
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+    networks:
+      - wanderlust-net
+
+volumes:
+  mongo_data:
+
+networks:
+  wanderlust-net:
+    driver: bridge
