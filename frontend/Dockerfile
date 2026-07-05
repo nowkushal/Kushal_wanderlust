@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN sed -i '/"prepare"/d' package.json && npm install
+RUN apk add --no-cache jq && jq 'del(.scripts.prepare)' package.json > package.json.tmp && mv package.json.tmp package.json && npm install
 
 COPY . .
 RUN npm run build
